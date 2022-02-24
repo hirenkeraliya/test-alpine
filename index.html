@@ -10,8 +10,8 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body>
-    <div class="grid grid-cols-4 gap-5 mt-2 px-2" x-data @map-ready.window="addAllMarkers"
-        @marker-clicked.window="$store.app.displayPropertyDetails">
+    <div class="grid grid-cols-4 gap-5 mt-2 px-2" x-data @map-ready.window="$store.app.addAllMarkers()"
+        @marker-clicked.window="$store.app.displayPropertyDetailsModal(event)">
         <div class="col-span-1 rounded border border-gray-300 border-solid px-2">
             <div class="pt-3">
                 <label for="search-text">Search</label>
@@ -128,14 +128,13 @@
         <div class="col-span-3 rounded border border-gray-300 border-solid">
             <div id="property-map" style="height: 600px;"></div>
         </div>
-        <span x-data x-text="$store.app.isDisplayPropertyDetailsModal"></span>
 
         <div class="fixed z-10 inset-0 overflow-y-auto"
             aria-labelledby="modal-title"
             role="dialog"
             aria-modal="true"
             x-data
-            x-show="$store.app.isDisplayPropertyDetailsModal"
+            x-show="$store.app.selectedPropertyKey != null"
         >
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
@@ -148,9 +147,7 @@
                     <div
                         class="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t"
                     >
-                        <h3 class="text-3xl font-semibold" id="modal-title">
-                            Khushi Palm Universe Details
-                        </h3>
+                        <h3 class="text-3xl font-semibold" x-data x-text="$store.app.selectedProperty.name"></h3>
 
                         <button type="button">
                             X
@@ -180,6 +177,8 @@
 
                     <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                         <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                            x-data
+                            @click="$store.app.closePropertyDetailsModal()"
                         >
                             Close
                         </button>
@@ -190,7 +189,7 @@
     </div>
 
     <script async
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAsJECAeSPm3HZjYO6nbFjGqI5uKSunoNI&callback=generateMapWithMarkers">
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAsJECAeSPm3HZjYO6nbFjGqI5uKSunoNI&callback=renderMap">
     </script>
     </script>
     <script type="text/javascript" src="/properties.js"></script>
@@ -202,7 +201,8 @@
             Alpine.store('app', {
                 searchText: '',
                 properties: properties,
-                isDisplayPropertyDetailsModal: false,
+                selectedPropertyKey: null,
+                selectedProperty: {},
 
                 get matchedProperties() {
                     var matchedProperties = [];
@@ -228,66 +228,42 @@
 
                 selectSearchItem(propertyKey) {
                     this.searchText = '';
-                    console.log(this);
                     var propertyDetails = this.properties[propertyKey];
                 },
 
-                displayPropertyDetails(event) {
-                    console.log(this);
-                    // var propertyDetails = this.properties[event.detail.property_key];
-                    this.isDisplayPropertyDetailsModal = true;
-                    console.log(this.isDisplayPropertyDetailsModal);
+                addAllMarkers() {
+                    var application = this;
+                    this.properties.forEach(function (property, propertyKey) {
+                        var marker = new google.maps.Marker({
+                            position: { lat: property.latitude, lng: property.longitude },
+                            map: googleMapObject,
+                            icon: '/images/map-marker.png',
+                            title: property.name,
+                        });
+
+                        marker.addListener("click", function (event) {
+                            application.selectedPropertyKey = propertyKey;
+                            application.selectedProperty = property;
+                        });
+
+                        googleMapMarkers.push(marker);
+                    });
+                },
+
+                closePropertyDetailsModal() {
+                    this.selectedPropertyKey = null;
                 },
             })
         });
 
-        function generateMapWithMarkers() {
+        function renderMap() {
             googleMapObject = new google.maps.Map(document.getElementById("property-map"), {
                 center: { lat: 22.308155, lng: 70.800705 },
                 zoom: 12,
             })
 
-            var mapReadyEvent = new CustomEvent('map-ready');
+            var mapReadyEvent = new Event('map-ready');
             window.dispatchEvent(mapReadyEvent);
-        }
-
-        function addAllMarkers() {
-            properties.forEach(function (property, propertyKey) {
-                var marker = new google.maps.Marker({
-                    position: { lat: property.latitude, lng: property.longitude },
-                    map: googleMapObject,
-                    icon: '/images/map-marker.png',
-                    title: property.name,
-                });
-
-                marker.addListener("click", function (event) {
-                    var markerClickEvent = new CustomEvent('marker-clicked', {
-                        detail: {
-                            property_key: propertyKey
-                        }
-                    });
-                    window.dispatchEvent(markerClickEvent);
-
-                    // var propertyDetails = getPropertyDetails();
-
-                    // preparePropertyDetailsModalContent(propertyDetails);
-                    // sizesModalContent(propertyDetails);
-                    // projectSizeModalContent(propertyDetails);
-                    // possessionStartsModalContent(propertyDetails);
-                    // configurationsModalContent(propertyDetails);
-                    // reraIdModalContent(propertyDetails);
-                    // preparePropertyImagesVideoModalContent(propertyDetails);
-                    // preparePropertyAmenitiesModalContent(propertyDetails);
-                    // preparePropertyFlooringsModalContent(propertyDetails);
-                    // preparePropertyFittingsModalContent(propertyDetails);
-                    // preparePropertyBrochureModalContent(propertyDetails);
-                    // preparePropertyFloorPlanModalContent(propertyDetails);
-                    // displayPropertyDetailsModal();
-                    // window.history.pushState('', '', '/'+propertyDetails.slug);
-                });
-
-                googleMapMarkers.push(marker);
-            });
         }
     </script>
 </body>
