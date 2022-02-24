@@ -7,15 +7,288 @@
     <title>Properties</title>
 
     <link rel="stylesheet" href="/public/css/style.css">
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body>
-    <div>
-        <!--  -->
+    <div class="grid grid-cols-4 gap-5 mt-2 px-2" x-data @map-ready.window="addAllMarkers"
+        @marker-clicked.window="$store.app.displayPropertyDetails">
+        <div class="col-span-1 rounded border border-gray-300 border-solid px-2">
+            <div class="pt-3">
+                <label for="search-text">Search</label>
+                <input type="text"
+                    class="rounded border w-full"
+                    id="search-text"
+                    x-data
+                    x-model="$store.app.searchText"
+                >
+
+                <div x-data
+                    x-show="$store.app.searchText.length != 0 && $store.app.matchedProperties.length != 0"
+                >
+                    <template x-data x-for="matchedProperty in $store.app.matchedProperties">
+                        <div class="border" x-data x-on:click="$store.app.selectSearchItem(matchedProperty.key)">
+                            <span x-data x-text="matchedProperty.data.name"></span>
+                            <br>
+                            <span x-data x-text="matchedProperty.data.address"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <div class="pt-3">
+                <label for="bhk">BHK</label>
+                <select name="bhk" class="rounded border w-full" id="bhk-filter">
+                    <option value="" selected></option>
+                    <option value="1">1 BHK</option>
+                    <option value="2">2 BHK</option>
+                    <option value="3">3 BHK</option>
+                    <option value="4">4 BHK</option>
+                    <option value="5">5 BHK</option>
+                    <option value="6">6 BHK</option>
+                </select>
+            </div>
+
+            <div class="pt-3">
+                <label for="bhk">Possession</label>
+
+                <div>
+                    <input type="radio" name="possession" id="any" value="any" checked />
+                    <label for="any">Any</label> <br>
+
+                    <input type="radio" name="possession" id="ready-to-move" value="Ready To Move" />
+                    <label for="ready-to-move">Ready To Move</label> <br>
+
+                    <input type="radio" name="possession" id="under-construction" value="Under Construction" />
+                    <label for="under-construction">Under Construction</label>
+                </div>
+            </div>
+
+            <div class="pt-3">
+                <label for="balcony">Balcony</label>
+                <select name="balcony" class="rounded border w-full" id="balcony-filter">
+                    <option value="" selected></option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+            </div>
+
+            <div class="pt-3">
+                <label for="kitchen">Kitchen</label>
+                <select name="kitchen" class="rounded border w-full" id="kitchen-filter">
+                    <option value="" selected></option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+            </div>
+
+            <div class="pt-3">
+                <label for="living_area">Living Area</label>
+                <select name="living_area" class="rounded border w-full" id="living-area-filter">
+                    <option value="" selected></option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+            </div>
+
+            <div class="pt-3">
+                <label for="storage_room">Storage Room</label>
+                <select name="storage_room" class="rounded border w-full" id="storage-room-filter">
+                    <option value="" selected></option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+            </div>
+
+            <div class="pt-3">
+                <label for="building">Building</label>
+                <select name="building" class="rounded border w-full" id="building-filter">
+                    <option value="" selected></option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-span-3 rounded border border-gray-300 border-solid">
+            <div id="property-map" style="height: 600px;"></div>
+        </div>
+        <span x-data x-text="$store.app.isDisplayPropertyDetailsModal"></span>
+
+        <div class="fixed z-10 inset-0 overflow-y-auto"
+            aria-labelledby="modal-title"
+            role="dialog"
+            aria-modal="true"
+            x-data
+            x-show="$store.app.isDisplayPropertyDetailsModal"
+        >
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div
+                    class="inline-block bg-white align-bottom rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-10/12"
+                >
+                    <div
+                        class="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t"
+                    >
+                        <h3 class="text-3xl font-semibold" id="modal-title">
+                            Khushi Palm Universe Details
+                        </h3>
+
+                        <button type="button">
+                            X
+                        </button>
+                    </div>
+
+                    <div class="relative p-6 flex-auto">
+                        <p class="my-4 text-blueGray-500 text-lg leading-relaxed" id="project-description">Residential
+                            project, Khushi Palm Universe in Rajkot is offering units for sale in Munjka. Check out some
+                            Apartment that suit your lifestyle and liking. Possession date of Khushi Palm Universe is
+                            Apr, 2022. The property offers 3 BHK, 4 BHK units. As per the area plan, units are in the
+                            size of 812.24 sq.ft.. It has 120 units. There are 2 buildings in this project. Contact for
+                            further details. Khushi Palm Universe is located in Palm Heights, 80 Feet Ring Road,
+                            Gangotri Park Main Road, Behind Palm City, Raiya Road, Nana Mava. In terms of facilities,
+                            Khushi Palm Universe is loaded with multiple offerings such as Lift, Gymnasium, Power
+                            Backup. For families with kids, there is Children's Play Area, nearby apart from Indoor Game
+                            Room - Billiards/Snooker Table, Carom Board, Table Tennis, Foosball Table, Swimming Pool.
+                            Residents can make use of Amphitheatre, Library, provisions in the project. It is an
+                            Earthquake Resistant Structure. Khushi Palm Universe follows all rules as prescribed by the
+                            state RERA. All details are furnished on the RERA portal as well.ID is
+                            PR/GJ/RAJKOT/RAJKOT/Others/RAA01553/070218. Khushi Developers is a very well-known
+                            developer-firm in this real estate market. Residents and their lifestyle are at the centre
+                            of their developments. Prominent suburbs of Rajkot are close by to Munjka and with several
+                            schools, hospitals, banks and offices situated in the proximity, the project is a preferred
+                            choice for home seekers.</p>
+                    </div>
+
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script async
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAsJECAeSPm3HZjYO6nbFjGqI5uKSunoNI&callback=generateMapWithMarkers">
+    </script>
+    </script>
     <script type="text/javascript" src="/properties.js"></script>
     <script>
+        var googleMapObject;
+        var googleMapMarkers = [];
+
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('app', {
+                searchText: '',
+                properties: properties,
+                isDisplayPropertyDetailsModal: false,
+
+                get matchedProperties() {
+                    var matchedProperties = [];
+
+                    for (const key in this.properties) {
+                        if (matchedProperties.length === 5) {
+                            return matchedProperties;
+                        }
+
+                        if (
+                            this.properties[key].name.toLowerCase().includes(this.searchText) ||
+                            this.properties[key].address.toLowerCase().includes(this.searchText)
+                        ) {
+                            matchedProperties.push({
+                                key: key,
+                                data: this.properties[key]
+                            });
+                        }
+                    }
+
+                    return matchedProperties;
+                },
+
+                selectSearchItem(propertyKey) {
+                    this.searchText = '';
+                    console.log(this);
+                    var propertyDetails = this.properties[propertyKey];
+                },
+
+                displayPropertyDetails(event) {
+                    console.log(this);
+                    // var propertyDetails = this.properties[event.detail.property_key];
+                    this.isDisplayPropertyDetailsModal = true;
+                    console.log(this.isDisplayPropertyDetailsModal);
+                },
+            })
+        });
+
+        function generateMapWithMarkers() {
+            googleMapObject = new google.maps.Map(document.getElementById("property-map"), {
+                center: { lat: 22.308155, lng: 70.800705 },
+                zoom: 12,
+            })
+
+            var mapReadyEvent = new CustomEvent('map-ready');
+            window.dispatchEvent(mapReadyEvent);
+        }
+
+        function addAllMarkers() {
+            properties.forEach(function (property, propertyKey) {
+                var marker = new google.maps.Marker({
+                    position: { lat: property.latitude, lng: property.longitude },
+                    map: googleMapObject,
+                    icon: '/images/map-marker.png',
+                    title: property.name,
+                });
+
+                marker.addListener("click", function (event) {
+                    var markerClickEvent = new CustomEvent('marker-clicked', {
+                        detail: {
+                            property_key: propertyKey
+                        }
+                    });
+                    window.dispatchEvent(markerClickEvent);
+
+                    // var propertyDetails = getPropertyDetails();
+
+                    // preparePropertyDetailsModalContent(propertyDetails);
+                    // sizesModalContent(propertyDetails);
+                    // projectSizeModalContent(propertyDetails);
+                    // possessionStartsModalContent(propertyDetails);
+                    // configurationsModalContent(propertyDetails);
+                    // reraIdModalContent(propertyDetails);
+                    // preparePropertyImagesVideoModalContent(propertyDetails);
+                    // preparePropertyAmenitiesModalContent(propertyDetails);
+                    // preparePropertyFlooringsModalContent(propertyDetails);
+                    // preparePropertyFittingsModalContent(propertyDetails);
+                    // preparePropertyBrochureModalContent(propertyDetails);
+                    // preparePropertyFloorPlanModalContent(propertyDetails);
+                    // displayPropertyDetailsModal();
+                    // window.history.pushState('', '', '/'+propertyDetails.slug);
+                });
+
+                googleMapMarkers.push(marker);
+            });
+        }
     </script>
 </body>
 </html>
